@@ -2,6 +2,11 @@
 echo ""
 echo "#########################################################################"
 echo ""
+echo "Running Apt Update & Upgrade..."
+apt update && apt upgrade -y
+apt install -y wget git nano lsof cron
+systemctl enable cron
+
 echo "Enter the password you want to use for MySQL root: "
 read rootpass
 echo ""
@@ -28,27 +33,24 @@ export LC_ALL=en_US.UTF-8
 
 echo "Setting up PHP 7.0 Repository..."
 
-sudo apt-get install -y software-properties-common
+apt install -y software-properties-common
 add-apt-repository ppa:ondrej/php -y
 
-echo "Running Apt Update & Upgrade..."
-apt-get update && apt-get upgrade -y
-
 echo "Installing Initial Packages..."
-apt-get install -y dialog net-tools wget git curl \
-nano sudo unzip sl lolcat software-properties-common \
+apt install -y dialog net-tools wget git curl \
+nano unzip sl lolcat software-properties-common \
 aview
 
 echo "Installing Nginx..."
-apt-get install nginx nginx-extras -y
+apt install nginx nginx-extras -y
 /etc/init.d/nginx stop
 
 echo "Installing Apache2..."
-apt-get install apache2 -y
+apt install apache2 -y
 /etc/init.d/apache2 stop
 
 echo "Installing Additional Packages..."
-apt-get -y install php7.0-dev php7.0-mcrypt php7.0-intl \
+apt -y install php7.0-dev php7.0-mcrypt php7.0-intl \
 php7.0-mbstring php7.0-zip memcached php7.0-memcache \
 php7.0 php7.0-xml php7.0-gettext php7.0-soap php7.0-mysql \
 php7.0-geoip php-pear nodejs libapache2-mod-php php7.0-curl \
@@ -62,20 +64,20 @@ pear channel-discover pear.phing.info
 pear install phing/phing-2.15.0
 
 echo "Installing npm 2.5.11..."
-apt-get install npm -y
+apt install npm -y
 npm config set strict-ssl false
 npm install -g npm@2.15.11
 ln -s /usr/bin/nodejs /usr/bin/node
 
 echo "Configuring Timezone..."
-sudo ln -fs /usr/share/zoneinfo/America/Los_angeles /etc/localtime
-sudo dpkg-reconfigure --frontend noninteractive tzdata
+ln -fs /usr/share/zoneinfo/America/Los_angeles /etc/localtime
+dpkg-reconfigure --frontend noninteractive tzdata
 
 echo "Installing MySQL Server ..."
 export DEBIAN_FRONTEND="noninteractive"
-echo "mysql-server mysql-server/root_password password $rootpass" | sudo debconf-set-selections
-echo "mysql-server mysql-server/root_password_again password $rootpass" | sudo debconf-set-selections
-apt-get install -y mysql-server
+echo "mysql-server mysql-server/root_password password $rootpass" | debconf-set-selections
+echo "mysql-server mysql-server/root_password_again password $rootpass" | debconf-set-selections
+apt install -y mysql-server
 
 echo "Creating MySQL Users..."
 mysql -uroot -p$rootpass -e "create database stalker_db;"
@@ -105,11 +107,11 @@ echo '?>' >> /var/www/html/index.php
 echo "Configuring PHP..."
 sed -i 's/short_open_tag = Off/short_open_tag = On/g' /etc/php/7.0/apache2/php.ini
 ln -s /etc/php/7.0/mods-available/mcrypt.ini /etc/php/8.1/mods-available/
-sudo a2dismod mpm_event
-sudo a2enmod php7.0
+a2dismod mpm_event
+a2enmod php7.0
 phpenmod mcrypt
 a2enmod rewrite
-apt-get purge libapache2-mod-php5filter > /dev/null
+apt purge libapache2-mod-php5filter > /dev/null
 
 echo "Setting up Apache2 Config File..."
 cd /etc/apache2/sites-enabled/
@@ -147,7 +149,7 @@ sed -i "s/mysql_pass = 1/mysql_pass = $stalkerpass/g" /var/www/html/stalker_port
 sed -i "s/mysql -u root -p mysql/mysql -u root -p$rootpass mysql/g" /var/www/html/stalker_portal/deploy/build.xml
 git config --global http.sslVerify "false"
 cd /var/www/html/stalker_portal/deploy
-sudo phing
+phing
 git config --global --unset http.sslVerify
 sed -i "s/mysql -u root -p$rootpass mysql/mysql -u root -p mysql/g" /var/www/html/stalker_portal/deploy/build.xml
 echo ""
